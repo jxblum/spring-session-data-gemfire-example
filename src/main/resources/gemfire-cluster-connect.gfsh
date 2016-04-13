@@ -1,0 +1,5 @@
+connect --locator=localhost[11235]
+list members
+describe member --name=ServerA
+list regions
+describe region --name=/ClusteredSpringSessions
