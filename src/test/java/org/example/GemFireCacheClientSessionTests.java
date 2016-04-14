@@ -135,7 +135,7 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 		assertThat(expected).isNotNull();
 		assertThat(expected.isExpired()).isFalse();
 
-		ExpiringSession actual = loadDirect(expected.getId());
+		ExpiringSession actual = loadFromRegion(expected.getId());
 
 		assertThat(actual).isNotNull();
 		assertThat(actual.isExpired()).isFalse();
@@ -149,7 +149,7 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 
 		assertThat(actual).isNull();
 
-		actual = loadDirect(expected.getId());
+		actual = loadFromRegion(expected.getId());
 
 		assertThat(actual).isNull();
 	}

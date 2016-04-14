@@ -34,7 +34,7 @@ public abstract class AbstractGemFireCacheClientSessionTests {
 		return getSessionRepository().getSession(sessionId.toString());
 	}
 
-	protected ExpiringSession loadDirect(Object sessionId) {
+	protected ExpiringSession loadFromRegion(Object sessionId) {
 		return getSessionRegion().get(sessionId);
 	}
 
