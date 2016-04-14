@@ -26,20 +26,18 @@ import com.gemstone.gemfire.cache.client.PoolFactory;
 import com.gemstone.gemfire.cache.client.PoolManager;
 
 /**
- * The GemFireClientCacheTests class...
+ * The GemFireCacheClientSessionTests class...
  *
  * @author John Blum
  * @since 1.0.0
  */
-public class GemFireClientCacheTests {
+public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSessionTests {
 
-	protected static final int DEFAULT_CACHE_SERVER_PORT = 12480;
+	protected static final int GEMFIRE_CACHE_SERVER_PORT = 12480;
 	protected static final int MAX_CONNECTIONS = 50;
 
-	private static final Object LOCK = new Object();
-
-	protected static final String DEFAULT_CACHE_SERVER_HOST = "localhost";
 	protected static final String DEFAULT_GEMFIRE_LOG_LEVEL = "warning";
+	protected static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
 	protected static final String GEMFIRE_POOL_NAME = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME;
 	protected static final String GEMFIRE_REGION_NAME =
 		GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME;
@@ -49,8 +47,8 @@ public class GemFireClientCacheTests {
 	private static SessionRepository<ExpiringSession> sessionRepository;
 
 	@BeforeClass
-	public static void setupGemFireClient() {
-		gemfireCache = gemfireCache(GemFireClientCacheTests.class.getSimpleName(), logLevel());
+	public static void setupGemFireCacheClient() {
+		gemfireCache = gemfireCache(GemFireCacheClientSessionTests.class.getSimpleName(), logLevel());
 
 		Pool gemfirePool = gemfirePool(GEMFIRE_POOL_NAME);
 
@@ -60,7 +58,7 @@ public class GemFireClientCacheTests {
 	}
 
 	@AfterClass
-	public static void shutdownGemFireClient() {
+	public static void shutdownGemFireCacheClient() {
 		if (gemfireCache != null) {
 			gemfireCache.close();
 		}
@@ -89,7 +87,7 @@ public class GemFireClientCacheTests {
 		poolFactory.setReadTimeout(intValue(TimeUnit.SECONDS.toMillis(20)));
 		poolFactory.setRetryAttempts(1);
 		poolFactory.setThreadLocalConnections(false);
-		poolFactory.addServer(DEFAULT_CACHE_SERVER_HOST, DEFAULT_CACHE_SERVER_PORT);
+		poolFactory.addServer(GEMFIRE_CACHE_SERVER_HOST, GEMFIRE_CACHE_SERVER_PORT);
 
 		return poolFactory.create(poolName);
 	}
@@ -113,52 +111,15 @@ public class GemFireClientCacheTests {
 		return new GemFireOperationsSessionRepository(gemfireOperations);
 	}
 
-	ExpiringSession load(Object sessionId) {
-		return sessionRepository.getSession(sessionId.toString());
+	@Override
+	protected Region<Object, ExpiringSession> getSessionRegion() {
+		return gemfireCache.getRegion(GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME);
 	}
 
-	ExpiringSession loadDirect(Object sessionId) {
-		return gemfireCache.<Object, ExpiringSession>getRegion(GEMFIRE_REGION_NAME).get(sessionId);
-	}
-
-	ExpiringSession newSession() {
-		return sessionRepository.createSession();
-	}
-
-	ExpiringSession save(ExpiringSession session) {
-		sessionRepository.save(session);
-		return session;
-	}
-
-	ExpiringSession touch(ExpiringSession session) {
-		session.setLastAccessedTime(System.currentTimeMillis());
-		return session;
-	}
-
-	void waitOnConditionForDuration(Condition condition, long duration) {
-		final long timeout = (System.currentTimeMillis() + duration);
-
-		boolean interrupted = false;
-
-		try {
-			// wait uninterrupted...
-			while (!condition.evaluate() && System.currentTimeMillis() < timeout) {
-				synchronized (LOCK) {
-					try {
-						TimeUnit.MILLISECONDS.timedWait(LOCK, 500);
-					}
-					catch (InterruptedException ignore) {
-						interrupted = true;
-					}
-				}
-			}
-		}
-		finally {
-			// but, if we were interrupted, reset the interrupt!
-			if (interrupted) {
-				Thread.currentThread().interrupt();
-			}
-		}
+	@Override
+	protected SessionRepository<ExpiringSession> getSessionRepository() {
+		assertThat(sessionRepository).isNotNull();
+		return sessionRepository;
 	}
 
 	@Before
@@ -178,6 +139,8 @@ public class GemFireClientCacheTests {
 
 		assertThat(actual).isEqualTo(expected);
 
+		// Session timeout (i.e. GemFire's "ClusteredSpringSessions" Region expiration idle-timeout)
+		// is set to 1 second
 		waitOnConditionForDuration(() -> false, TimeUnit.SECONDS.toMillis(2));
 
 		actual = load(actual.getId());
@@ -187,10 +150,6 @@ public class GemFireClientCacheTests {
 		actual = loadDirect(expected.getId());
 
 		assertThat(actual).isNull();
-	}
-
-	interface Condition {
-		boolean evaluate();
 	}
 
 }

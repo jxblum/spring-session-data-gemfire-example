@@ -35,7 +35,7 @@ dependencies {
     compile "org.springframework.data:spring-data-gemfire:$springDataGemFireVersion"
     compile "org.springframework.session:spring-session:$springSessionVersion"
     compile "org.springframework.session:spring-session-data-gemfire:$springSessionVersion"
-    testCompile "junit:junit:$junitVersion"
+    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
 }
 
 jar {

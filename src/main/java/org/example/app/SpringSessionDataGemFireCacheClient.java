@@ -2,7 +2,6 @@ package org.example.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -33,17 +32,17 @@ import com.gemstone.gemfire.cache.RegionAttributes;
 import com.gemstone.gemfire.cache.client.ClientRegionShortcut;
 
 /**
- * The SpringSessionDataGemFireClient class...
+ * The SpringSessionDataGemFireCacheClient class...
  *
  * @author John Blum
  * @since 1.0.0
  */
 @SpringBootApplication
 @SuppressWarnings("unused")
-public class SpringSessionDataGemFireClient implements CommandLineRunner {
+public class SpringSessionDataGemFireCacheClient implements CommandLineRunner {
 
 	public static void main(final String[] args) {
-		SpringApplication springApplication = new SpringApplication(SpringSessionDataGemFireClient.class);
+		SpringApplication springApplication = new SpringApplication(SpringSessionDataGemFireCacheClient.class);
 		springApplication.setWebEnvironment(false);
 		springApplication.run(args);
 	}
@@ -89,27 +88,31 @@ public class SpringSessionDataGemFireClient implements CommandLineRunner {
 @EnableGemFireHttpSession
 @Profile("xml")
 @SuppressWarnings("unused")
-class GemFireClientCacheXmlConfiguration  {
+class GemFireCacheClientXmlConfiguration {
 }
 
 @Configuration
 @Profile("java")
 @EnableGemFireHttpSession
 @SuppressWarnings("unused")
-class GemFireClientCacheJavaConfiguration {
+class GemFireCacheClientJavaConfiguration {
+
+	static final int GEMFIRE_CACHE_SERVER_PORT = 12480;
+	static final int MAX_CONNECTIONS = 50;
 
 	static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
-
-	int intValue(Long value) {
-		return value.intValue();
-	}
+	static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
 
 	String applicationName() {
-		return SpringSessionDataGemFireClient.class.getSimpleName().concat("Application");
+		return SpringSessionDataGemFireCacheClient.class.getSimpleName().concat("Application");
 	}
 
 	String gemfireLogLevel() {
 		return System.getProperty("gemfire.log-level", DEFAULT_GEMFIRE_LOG_LEVEL);
+	}
+
+	int intValue(Long value) {
+		return value.intValue();
 	}
 
 	ConnectionEndpoint newConnectionEndpoint(String host, int port) {
@@ -134,7 +137,6 @@ class GemFireClientCacheJavaConfiguration {
 		ClientCacheFactoryBean gemfireCache = new ClientCacheFactoryBean();
 
 		gemfireCache.setClose(true);
-		gemfireCache.setPoolName(GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME);
 		gemfireCache.setProperties(gemfireProperties());
 
 		return gemfireCache;
@@ -147,12 +149,12 @@ class GemFireClientCacheJavaConfiguration {
 		gemfirePool.setFreeConnectionTimeout(intValue(TimeUnit.SECONDS.toMillis(5)));
 		gemfirePool.setIdleTimeout(TimeUnit.MINUTES.toMillis(2));
 		gemfirePool.setKeepAlive(false);
-		gemfirePool.setMaxConnections(50);
+		gemfirePool.setMaxConnections(MAX_CONNECTIONS);
 		gemfirePool.setPingInterval(TimeUnit.SECONDS.toMillis(15));
 		gemfirePool.setReadTimeout(intValue(TimeUnit.SECONDS.toMillis(20)));
 		gemfirePool.setRetryAttempts(1);
 		gemfirePool.setSubscriptionEnabled(true);
-		gemfirePool.setServers(Collections.singleton(newConnectionEndpoint("localhost", 12480)));
+		gemfirePool.addServers(newConnectionEndpoint(GEMFIRE_CACHE_SERVER_HOST, GEMFIRE_CACHE_SERVER_PORT));
 
 		return gemfirePool;
 	}
@@ -162,10 +164,9 @@ class GemFireClientCacheJavaConfiguration {
 	ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion(GemFireCache gemfireCache,
 		RegionAttributes<Object, ExpiringSession> sessionRegionAttributes)
 	{
-		System.out.printf("Overriding the ");
+		System.err.printf("Overriding Spring Session Data GemFire's 'ClusteredSpringSessions' Region");
 
-		ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion =
-			new ClientRegionFactoryBean<Object, ExpiringSession>();
+		ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion = new ClientRegionFactoryBean<>();
 
 		sessionRegion.setAttributes(sessionRegionAttributes);
 		sessionRegion.setCache(gemfireCache);
