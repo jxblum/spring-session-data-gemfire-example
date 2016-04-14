@@ -42,7 +42,7 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 	}
 
 	@Test
-	public void sessionCreationAndAccessIsSuccessful() {
+	public void sessionCreationAccessAndExpirationIsSuccessful() {
 		ExpiringSession expected = save(touch(newSession()));
 
 		assertThat(expected).isNotNull();
@@ -50,6 +50,8 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 
 		ExpiringSession actual = loadDirect(expected.getId());
 
+		assertThat(actual).isNotNull();
+		assertThat(actual.isExpired()).isFalse();
 		assertThat(actual).isEqualTo(expected);
 
 		// Session timeout (i.e. GemFire's "ClusteredSpringSessions" Region expiration idle-timeout)
