@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
     compile "com.gemstone.gemfire:gemfire:$gemfireVersion"
+    compile "org.assertj:assertj-core:$assertjVersion"
     compile("org.springframework.boot:spring-boot-starter:$springBootVersion") {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
@@ -34,7 +35,7 @@ dependencies {
     compile "org.springframework.data:spring-data-gemfire:$springDataGemFireVersion"
     compile "org.springframework.session:spring-session:$springSessionVersion"
     compile "org.springframework.session:spring-session-data-gemfire:$springSessionVersion"
-    compile "org.assertj:assertj-core:$assertjVersion"
+    testCompile "junit:junit:$junitVersion"
 }
 
 jar {
