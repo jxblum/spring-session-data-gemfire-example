@@ -35,6 +35,9 @@ dependencies {
     compile "org.springframework.data:spring-data-gemfire:$springDataGemFireVersion"
     compile "org.springframework.session:spring-session:$springSessionVersion"
     compile "org.springframework.session:spring-session-data-gemfire:$springSessionVersion"
+    runtime "org.slf4j:slf4j-api:$slf4jVersion"
+    runtime "org.slf4j:slf4j-simple:$slf4jVersion"
+    runtime "org.springframework.shell:spring-shell:$springShellVersion"
     testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
 }
 
