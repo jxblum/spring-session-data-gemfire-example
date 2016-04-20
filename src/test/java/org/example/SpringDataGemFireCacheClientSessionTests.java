@@ -75,7 +75,7 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 		static final int MAX_CONNECTIONS = 50;
 
 		static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
-		static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
+		static final String GEMFIRE_CACHE_SERVER_HOST = "tidepool.gemstone.com";
 
 		String applicationName() {
 			return SpringDataGemFireCacheClientSessionTests.class.getSimpleName();

@@ -12,7 +12,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -83,15 +82,13 @@ public class SpringSessionDataGemFireCacheClient implements CommandLineRunner {
 	}
 }
 
-@Configuration
-@ImportResource("client-cache.xml")
-@EnableGemFireHttpSession
 @Profile("xml")
+@EnableGemFireHttpSession
+@ImportResource("client-cache.xml")
 @SuppressWarnings("unused")
 class GemFireCacheClientXmlConfiguration {
 }
 
-@Configuration
 @Profile("java")
 @EnableGemFireHttpSession
 @SuppressWarnings("unused")
