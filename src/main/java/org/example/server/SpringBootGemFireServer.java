@@ -82,10 +82,11 @@ public class SpringBootGemFireServer {
 		return gemfireCache;
 	}
 
-	@Bean CacheServerFactoryBean gemfireCacheServer(Cache gemfireCache,
-		@Value("${gemfire.cache.server.bind-address:localhost}") String bindAddress,
-		@Value("${gemfire.cache.server.hostname-for-clients:localhost}") String hostnameForClients,
-		@Value("${gemfire.cache.server.port:12480}") int port) {
+	@Bean
+	CacheServerFactoryBean gemfireCacheServer(Cache gemfireCache,
+			@Value("${gemfire.cache.server.bind-address:localhost}") String bindAddress,
+			@Value("${gemfire.cache.server.hostname-for-clients:localhost}") String hostnameForClients,
+			@Value("${gemfire.cache.server.port:12480}") int port) {
 
 		CacheServerFactoryBean gemfireCacheServer = new CacheServerFactoryBean();
 

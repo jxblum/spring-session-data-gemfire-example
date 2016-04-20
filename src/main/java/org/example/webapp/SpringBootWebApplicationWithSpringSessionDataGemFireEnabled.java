@@ -80,7 +80,7 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 
 	@Bean
 	PoolFactoryBean gemfirePool(@Value("${gemfire.cache.server.host:localhost}") String host,
-		@Value("${gemfire.cache.server.port:12480}") int port) {
+			@Value("${gemfire.cache.server.port:12480}") int port) {
 
 		PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
@@ -107,14 +107,18 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 	@RequestMapping("/attributes")
 	@ResponseBody
 	public Map attributes(HttpSession session,
-		@RequestParam(name = "name", required = false) String name,
-		@RequestParam(name = "value", required = false) String value) {
+			@RequestParam(name = "name", required = false) String name,
+			@RequestParam(name = "value", required = false) String value) {
 
 		if (isSet(name) && isSet(value)) {
 			session.setAttribute(name, value);
 		}
 
 		return attributes(updateRequestCount(session));
+	}
+
+	private boolean isSet(String value) {
+		return StringUtils.hasText(value);
 	}
 
 	private Map<String, String> attributes(HttpSession session) {
@@ -125,10 +129,6 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 		}
 
 		return attributes;
-	}
-
-	private boolean isSet(String value) {
-		return StringUtils.hasText(value);
 	}
 
 	private <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
