@@ -1,10 +1,10 @@
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
-    }
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+	}
 }
 
 apply plugin: 'java'
@@ -15,33 +15,37 @@ apply plugin: 'spring-boot'
 description = 'Spring Session Data GemFire Example Application'
 group = 'io.pivotal'
 
+springBoot {
+	mainClass = 'org.example.webapp.SpringBootWebApplicationWithSpringSessionDataGemFireEnabled'
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-    maven { url 'https://repo.spring.io/libs-release' }
-    maven { url 'https://repo.spring.io/libs-snapshot' }
+	maven { url 'https://repo.spring.io/libs-release' }
+	maven { url 'https://repo.spring.io/libs-snapshot' }
 }
 
 dependencies {
-    compile "com.gemstone.gemfire:gemfire:$gemfireVersion"
-    compile "org.assertj:assertj-core:$assertjVersion"
-    compile("org.springframework.boot:spring-boot-starter:$springBootVersion") {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
-    compile("org.springframework.boot:spring-boot-starter-web:$springBootVersion") {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
-    }
-    compile "org.springframework.data:spring-data-gemfire:$springDataGemFireVersion"
-    compile "org.springframework.session:spring-session:$springSessionVersion"
-    compile "org.springframework.session:spring-session-data-gemfire:$springSessionVersion"
-    runtime "org.slf4j:slf4j-api:$slf4jVersion"
-    runtime "org.slf4j:slf4j-simple:$slf4jVersion"
-    runtime "org.springframework.shell:spring-shell:$springShellVersion"
-    testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
+	compile "com.gemstone.gemfire:gemfire:$gemfireVersion"
+	compile "org.assertj:assertj-core:$assertjVersion"
+	compile("org.springframework.boot:spring-boot-starter:$springBootVersion") {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+	compile("org.springframework.boot:spring-boot-starter-web:$springBootVersion") {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+	compile "org.springframework.data:spring-data-gemfire:$springDataGemFireVersion"
+	compile "org.springframework.session:spring-session:$springSessionVersion"
+	compile "org.springframework.session:spring-session-data-gemfire:$springSessionVersion"
+	runtime "org.slf4j:slf4j-api:$slf4jVersion"
+	runtime "org.slf4j:slf4j-simple:$slf4jVersion"
+	runtime "org.springframework.shell:spring-shell:$springShellVersion"
+	testCompile("org.springframework.boot:spring-boot-starter-test:$springBootVersion")
 }
 
 jar {
-    baseName = 'spring-session-data-gemfire-example'
-    version = '1.0.0.SNAPSHOT'
+	baseName = "$rootProject.name"
+	version = "$version"
 }
