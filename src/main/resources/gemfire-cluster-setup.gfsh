@@ -1,6 +1,6 @@
-start locator --name=LocatorX --log-level=config --port=11235
+start locator --name=LocatorX --log-level=config
 set variable --name=SPRING_JARS --value="/Users/jblum/pivdev/lab/lib/spring/spring-core-4.2.5.RELEASE.jar:/Users/jblum/pivdev/lab/lib/spring/spring-expression-4.2.5.RELEASE.jar:/Users/jblum/pivdev/lab/lib/spring/spring-session-1.2.0.BUILD-SNAPSHOT.jar"
-start server --name=ServerA --classpath=${SPRING_JARS} --log-level=config --server-port=12480
+start server --name=ServerA --log-level=config --classpath=${SPRING_JARS}
 list members
 create region --name=ClusteredSpringSessions --type=PARTITION --entry-idle-time-expiration=1 --entry-idle-time-expiration-action=INVALIDATE --enable-statistics=true
 list regions
