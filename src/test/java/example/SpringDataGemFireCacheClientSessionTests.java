@@ -1,13 +1,17 @@
-package org.example;
+package example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Resource;
+
+import com.gemstone.gemfire.cache.Region;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
@@ -20,12 +24,20 @@ import org.springframework.session.data.gemfire.config.annotation.web.http.GemFi
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.gemstone.gemfire.cache.Region;
+import example.server.SpringBootGemFireServer;
+import example.support.NumberUtils;
 
 /**
- * The SpringDataGemFireCacheClientSessionTests class...
+ * Test suite of test cases testing a Spring Data GemFire cache client application using Spring Session
+ * backed by GemFire to manage HttpSessions.
  *
  * @author John Blum
+ * @see org.springframework.context.annotation.Bean
+ * @see org.springframework.context.annotation.Configuration
+ * @see org.springframework.session.ExpiringSession
+ * @see org.springframework.session.SessionRepository
+ * @see org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession
+ * @see org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration
  * @since 1.0.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -71,39 +83,30 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 	@EnableGemFireHttpSession
 	public static class GemFireCacheClientJavaConfiguration {
 
-		static final int GEMFIRE_CACHE_SERVER_PORT = 12480;
-		static final int MAX_CONNECTIONS = 50;
-
 		static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
-		static final String GEMFIRE_CACHE_SERVER_HOST = "tidepool.gemstone.com";
+
+		static ConnectionEndpoint newConnectionEndpoint(String host, int port) {
+			return new ConnectionEndpoint(host, port);
+		}
+
+		@Bean
+		static PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
+			return new PropertySourcesPlaceholderConfigurer();
+		}
+
+		Properties gemfireProperties() {
+			Properties gemfireProperties = new Properties();
+			gemfireProperties.setProperty("name", applicationName());
+			gemfireProperties.setProperty("log-level", logLevel());
+			return gemfireProperties;
+		}
 
 		String applicationName() {
 			return SpringDataGemFireCacheClientSessionTests.class.getSimpleName();
 		}
 
-		String gemfireLogLevel() {
+		String logLevel() {
 			return System.getProperty("gemfire.log.level", DEFAULT_GEMFIRE_LOG_LEVEL);
-		}
-
-		int intValue(Long value) {
-			return value.intValue();
-		}
-
-		ConnectionEndpoint newConnectionEndpoint(String host, int port) {
-			return new ConnectionEndpoint(host, port);
-		}
-
-		@Bean
-		PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
-			return new PropertySourcesPlaceholderConfigurer();
-		}
-
-		@Bean
-		Properties gemfireProperties() {
-			Properties gemfireProperties = new Properties();
-			gemfireProperties.setProperty("name", applicationName());
-			gemfireProperties.setProperty("log-level", gemfireLogLevel());
-			return gemfireProperties;
 		}
 
 		@Bean
@@ -117,21 +120,21 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 		}
 
 		@Bean
-		PoolFactoryBean gemfirePool() {
+		PoolFactoryBean gemfirePool(
+			@Value("${gemfire.client.server.host:localhost}") String host,
+		    @Value("${gemfire.client.server.port:"+ SpringBootGemFireServer.GEMFIRE_CACHE_SERVER_PORT+"}") int port
+		) {
 			PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
-			gemfirePool.setFreeConnectionTimeout(intValue(TimeUnit.SECONDS.toMillis(5)));
-			gemfirePool.setIdleTimeout(TimeUnit.MINUTES.toMillis(2));
 			gemfirePool.setKeepAlive(false);
-			gemfirePool.setMaxConnections(50);
-			gemfirePool.setPingInterval(TimeUnit.SECONDS.toMillis(15));
-			gemfirePool.setReadTimeout(intValue(TimeUnit.SECONDS.toMillis(20)));
+			gemfirePool.setPingInterval(TimeUnit.SECONDS.toMillis(5));
+			gemfirePool.setReadTimeout(NumberUtils.intValue(TimeUnit.SECONDS.toMillis(20)));
 			gemfirePool.setRetryAttempts(1);
 			gemfirePool.setSubscriptionEnabled(true);
-			gemfirePool.addServers(newConnectionEndpoint(GEMFIRE_CACHE_SERVER_HOST, GEMFIRE_CACHE_SERVER_PORT));
+			gemfirePool.setThreadLocalConnections(false);
+			gemfirePool.addServers(newConnectionEndpoint(host, port));
 
 			return gemfirePool;
 		}
 	}
-
 }

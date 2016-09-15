@@ -1,4 +1,4 @@
-package org.example.webapp;
+package example.webapp;
 
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import example.server.SpringBootGemFireServer;
+import example.support.NumberUtils;
+
 /**
  * The SpringBootWebApplicationWithSpringSessionDataGemFireEnabled class...
  *
@@ -36,36 +40,35 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @SuppressWarnings("unused")
 public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 
-	static final int MAX_CONNECTIONS = 50;
-
 	static final String DEFAULT_GEMFIRE_LOG_LEVEL = "config";
 	static final String REQUEST_COUNT_SESSION_ATTRIBUTE_NAME = "requestCount";
 
-	public static void main(final String[] args) {
+	public static void main(String[] args) {
 		SpringApplication.run(SpringBootWebApplicationWithSpringSessionDataGemFireEnabled.class, args);
+	}
+
+	static ConnectionEndpoint newConnectionEndpoint(String host, int port) {
+		return new ConnectionEndpoint(host, port);
+	}
+
+	@Bean
+	static PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
+		return new PropertySourcesPlaceholderConfigurer();
+	}
+
+	Properties gemfireProperties() {
+		Properties gemfireProperties = new Properties();
+		gemfireProperties.setProperty("name", applicationName());
+		gemfireProperties.setProperty("log-level", logLevel());
+		return gemfireProperties;
 	}
 
 	String applicationName() {
 		return SpringBootWebApplicationWithSpringSessionDataGemFireEnabled.class.getSimpleName();
 	}
 
-	String gemfireLogLevel() {
+	String logLevel() {
 		return System.getProperty("gemfire.log-level", DEFAULT_GEMFIRE_LOG_LEVEL);
-	}
-
-	int intValue(Long value) {
-		return value.intValue();
-	}
-
-	ConnectionEndpoint newConnectionEndpoint(String host, int port) {
-		return new ConnectionEndpoint(host, port);
-	}
-
-	Properties gemfireProperties() {
-		Properties gemfireProperties = new Properties();
-		gemfireProperties.setProperty("name", applicationName());
-		gemfireProperties.setProperty("log-level", gemfireLogLevel());
-		return gemfireProperties;
 	}
 
 	@Bean
@@ -79,29 +82,27 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 	}
 
 	@Bean
-	PoolFactoryBean gemfirePool(@Value("${gemfire.cache.server.host:localhost}") String host,
-			@Value("${gemfire.cache.server.port:12480}") int port) {
-
+	PoolFactoryBean gemfirePool(
+		@Value("${gemfire.client.server.host:localhost}") String host,
+		@Value("${gemfire.client.server.port:"+ SpringBootGemFireServer.GEMFIRE_CACHE_SERVER_PORT+"}") int port)
+	{
 		PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
-		gemfirePool.setMaxConnections(MAX_CONNECTIONS);
+		gemfirePool.setKeepAlive(false);
 		gemfirePool.setPingInterval(TimeUnit.SECONDS.toMillis(5));
+		gemfirePool.setReadTimeout(NumberUtils.intValue(TimeUnit.SECONDS.toMillis(20)));
 		gemfirePool.setRetryAttempts(1);
 		gemfirePool.setSubscriptionEnabled(true);
+		gemfirePool.setThreadLocalConnections(false);
 		gemfirePool.addServers(newConnectionEndpoint(host, port));
 
 		return gemfirePool;
 	}
 
-	@Bean
-	PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
-		return new PropertySourcesPlaceholderConfigurer();
-	}
-
 	@RequestMapping(method = RequestMethod.GET, value="/")
 	@ResponseBody
 	public String hello() {
-		return "<H1>Hello!</H1><br>Try the '/attributes' endpoint; it is more interesting, ;-)";
+		return "<H1>Hello!</H1><br>Try the '/attributes' endpoint; it's more interesting, ;-)";
 	}
 
 	@RequestMapping("/attributes")
@@ -156,5 +157,4 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 	private Integer nullSafeIncrement(Integer value) {
 		return (value != null ? ++value : 1);
 	}
-
 }

@@ -1,8 +1,18 @@
-package org.example;
+package example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
+
+import com.gemstone.gemfire.cache.Region;
+import com.gemstone.gemfire.cache.client.ClientCache;
+import com.gemstone.gemfire.cache.client.ClientCacheFactory;
+import com.gemstone.gemfire.cache.client.ClientRegionFactory;
+import com.gemstone.gemfire.cache.client.ClientRegionShortcut;
+import com.gemstone.gemfire.cache.client.Pool;
+import com.gemstone.gemfire.cache.client.PoolFactory;
+import com.gemstone.gemfire.cache.client.PoolManager;
+import com.gemstone.gemfire.cache.server.CacheServer;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,27 +26,23 @@ import org.springframework.session.SessionRepository;
 import org.springframework.session.data.gemfire.GemFireOperationsSessionRepository;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
 
-import com.gemstone.gemfire.cache.Region;
-import com.gemstone.gemfire.cache.client.ClientCache;
-import com.gemstone.gemfire.cache.client.ClientCacheFactory;
-import com.gemstone.gemfire.cache.client.ClientRegionFactory;
-import com.gemstone.gemfire.cache.client.ClientRegionShortcut;
-import com.gemstone.gemfire.cache.client.Pool;
-import com.gemstone.gemfire.cache.client.PoolFactory;
-import com.gemstone.gemfire.cache.client.PoolManager;
+import example.support.NumberUtils;
 
 /**
- * The GemFireCacheClientSessionTests class...
+ * Test suite of test cases testing a GemFire cache client application using Spring Session backed by GemFire
+ * for managing HttpSessions.
  *
  * @author John Blum
+ * @see com.gemstone.gemfire.cache.client.ClientCache
+ * @see org.springframework.session.ExpiringSession
+ * @see org.springframework.session.SessionRepository
  * @since 1.0.0
  */
 public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSessionTests {
 
-	protected static final int GEMFIRE_CACHE_SERVER_PORT = 12480;
-	protected static final int MAX_CONNECTIONS = 50;
+	protected static final int GEMFIRE_CACHE_SERVER_PORT = CacheServer.DEFAULT_PORT;
 
-	protected static final String DEFAULT_GEMFIRE_LOG_LEVEL = "warning";
+	protected static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
 	protected static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
 	protected static final String GEMFIRE_POOL_NAME = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME;
 	protected static final String GEMFIRE_REGION_NAME =
@@ -47,8 +53,8 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 	private static SessionRepository<ExpiringSession> sessionRepository;
 
 	@BeforeClass
-	public static void setupGemFireCacheClient() {
-		gemfireCache = gemfireCache(GemFireCacheClientSessionTests.class.getSimpleName(), logLevel());
+	public static void setupGemFireCacheClient() throws Exception {
+		gemfireCache = gemfireCache(applicationName(), logLevel());
 
 		Pool gemfirePool = gemfirePool(GEMFIRE_POOL_NAME);
 
@@ -64,8 +70,8 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 		}
 	}
 
-	static int intValue(Number number) {
-		return number.intValue();
+	static String applicationName() {
+		return GemFireCacheClientSessionTests.class.getSimpleName();
 	}
 
 	static String logLevel() {
@@ -79,13 +85,10 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 	static Pool gemfirePool(String poolName) {
 		PoolFactory poolFactory = PoolManager.createFactory();
 
-		poolFactory.setFreeConnectionTimeout(intValue(TimeUnit.SECONDS.toMillis(5)));
-		poolFactory.setIdleTimeout(TimeUnit.MINUTES.toMillis(2));
-		poolFactory.setMaxConnections(MAX_CONNECTIONS);
-		poolFactory.setPingInterval(TimeUnit.SECONDS.toMillis(15));
-		poolFactory.setPRSingleHopEnabled(true);
-		poolFactory.setReadTimeout(intValue(TimeUnit.SECONDS.toMillis(20)));
+		poolFactory.setPingInterval(TimeUnit.SECONDS.toMillis(5));
+		poolFactory.setReadTimeout(NumberUtils.intValue(TimeUnit.SECONDS.toMillis(20)));
 		poolFactory.setRetryAttempts(1);
+		poolFactory.setSubscriptionEnabled(true);
 		poolFactory.setThreadLocalConnections(false);
 		poolFactory.addServer(GEMFIRE_CACHE_SERVER_HOST, GEMFIRE_CACHE_SERVER_PORT);
 
@@ -107,8 +110,10 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 		return new GemfireTemplate(sessionRegion);
 	}
 
-	static SessionRepository<ExpiringSession> sessionRepository(GemfireOperations gemfireOperations) {
-		return new GemFireOperationsSessionRepository(gemfireOperations);
+	static SessionRepository<ExpiringSession> sessionRepository(GemfireOperations gemfireOperations) throws Exception {
+		GemFireOperationsSessionRepository sessionRepository = new GemFireOperationsSessionRepository(gemfireOperations);
+		sessionRepository.afterPropertiesSet();
+		return sessionRepository;
 	}
 
 	@Override
@@ -153,5 +158,4 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 
 		assertThat(actual).isNull();
 	}
-
 }

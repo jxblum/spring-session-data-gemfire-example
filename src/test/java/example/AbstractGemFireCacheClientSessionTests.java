@@ -1,19 +1,23 @@
-package org.example;
+package example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import com.gemstone.gemfire.cache.Region;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.session.ExpiringSession;
 import org.springframework.session.SessionRepository;
 
-import com.gemstone.gemfire.cache.Region;
-
 /**
- * The AbstractGemFireCacheClientSessionTests class...
+ * The AbstractGemFireCacheClientSessionTests class is an abstract base class encapsulating core functionality
+ * for writing integration tests using GemFire as the HttpSession implementation provider for Spring Session.
  *
  * @author John Blum
+ * @see org.springframework.session.ExpiringSession
+ * @see org.springframework.session.SessionRepository
+ * @see com.gemstone.gemfire.cache.Region
  * @since 1.0.0
  */
 public abstract class AbstractGemFireCacheClientSessionTests {
@@ -81,5 +85,4 @@ public abstract class AbstractGemFireCacheClientSessionTests {
 	protected interface Condition {
 		boolean evaluate();
 	}
-
 }
