@@ -27,6 +27,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.gemfire.client.ClientCacheFactoryBean;
 import org.springframework.data.gemfire.client.ClientRegionFactoryBean;
 import org.springframework.data.gemfire.client.PoolFactoryBean;
+import org.springframework.data.gemfire.config.annotation.ClientCacheApplication;
 import org.springframework.data.gemfire.config.xml.GemfireConstants;
 import org.springframework.data.gemfire.support.ConnectionEndpoint;
 import org.springframework.session.ExpiringSession;
@@ -174,4 +175,11 @@ class GemFireCacheClientJavaConfiguration {
 
 		return sessionRegion;
 	}
+}
+
+@Profile("annotation")
+@EnableGemFireHttpSession(poolName = "DEFAULT")
+@ClientCacheApplication(subscriptionEnabled = true)
+@SuppressWarnings("unused")
+class GemFireCacheClientAnnotationConfiguration {
 }
