@@ -20,7 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.data.gemfire.GemfireOperations;
 import org.springframework.data.gemfire.GemfireTemplate;
-import org.springframework.data.gemfire.config.GemfireConstants;
+import org.springframework.data.gemfire.config.xml.GemfireConstants;
 import org.springframework.session.ExpiringSession;
 import org.springframework.session.SessionRepository;
 import org.springframework.session.data.gemfire.GemFireOperationsSessionRepository;
