@@ -35,7 +35,6 @@ import org.springframework.session.data.gemfire.GemFireOperationsSessionReposito
 import org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
 
-import example.server.SpringBootGemFireServer;
 import example.support.NumberUtils;
 
 /**
@@ -139,11 +138,9 @@ class GemFireCacheClientJavaConfiguration {
 	}
 
 	@Bean(name = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME)
-	PoolFactoryBean gemfirePool(
-		@Value("${gemfire.client.server.host:localhost}") String host,
-		@Value("${gemfire.client.server.port:"+ SpringBootGemFireServer.GEMFIRE_CACHE_SERVER_PORT+"}") int port
-	)
-	{
+	PoolFactoryBean gemfirePool(@Value("${gemfire.client.server.host:localhost}") String host,
+			@Value("${gemfire.client.server.port:40404") int port) {
+
 		PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
 		gemfirePool.setKeepAlive(false);
@@ -160,9 +157,9 @@ class GemFireCacheClientJavaConfiguration {
 	@Bean(name = GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME)
 	@Profile("override-session-region")
 	ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion(GemFireCache gemfireCache,
-		@Qualifier("gemfirePool") Pool gemfirePool,
-		@Qualifier("sessionRegionAttributes") RegionAttributes<Object, ExpiringSession> sessionRegionAttributes)
-	{
+			@Qualifier("gemfirePool") Pool gemfirePool,
+			@Qualifier("sessionRegionAttributes") RegionAttributes<Object, ExpiringSession> sessionRegionAttributes) {
+
 		System.err.printf("Overriding Spring Session Data GemFire's 'ClusteredSpringSessions' Region");
 
 		ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion = new ClientRegionFactoryBean<>();

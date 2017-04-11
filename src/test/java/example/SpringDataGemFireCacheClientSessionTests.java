@@ -24,7 +24,6 @@ import org.springframework.session.data.gemfire.config.annotation.web.http.GemFi
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import example.server.SpringBootGemFireServer;
 import example.support.NumberUtils;
 
 /**
@@ -122,7 +121,7 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 		@Bean
 		PoolFactoryBean gemfirePool(
 			@Value("${gemfire.client.server.host:localhost}") String host,
-		    @Value("${gemfire.client.server.port:"+ SpringBootGemFireServer.GEMFIRE_CACHE_SERVER_PORT+"}") int port
+		    @Value("${gemfire.client.server.port:40404") int port
 		) {
 			PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
