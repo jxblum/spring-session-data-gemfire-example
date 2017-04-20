@@ -17,8 +17,8 @@ import org.springframework.session.data.gemfire.config.annotation.web.http.Enabl
  * @since 1.0.0
  */
 @SpringBootApplication
+@CacheServerApplication(name = "SpringBootGemFireServer")
 @EnableGemFireHttpSession(maxInactiveIntervalInSeconds = 1)
-@CacheServerApplication(name = "SpringBootGemFireServer", logLevel = "config")
 @SuppressWarnings("unused")
 public class SpringBootGemFireServer {
 
