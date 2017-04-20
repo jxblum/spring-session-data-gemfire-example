@@ -111,14 +111,15 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 	}
 
 	static SessionRepository<ExpiringSession> sessionRepository(GemfireOperations gemfireOperations) throws Exception {
-		GemFireOperationsSessionRepository sessionRepository = new GemFireOperationsSessionRepository(gemfireOperations);
+		GemFireOperationsSessionRepository sessionRepository =
+			new GemFireOperationsSessionRepository(gemfireOperations);
 		sessionRepository.afterPropertiesSet();
 		return sessionRepository;
 	}
 
 	@Override
 	protected Region<Object, ExpiringSession> getSessionRegion() {
-		return gemfireCache.getRegion(GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME);
+		return gemfireCache.getRegion(GEMFIRE_REGION_NAME);
 	}
 
 	@Override
