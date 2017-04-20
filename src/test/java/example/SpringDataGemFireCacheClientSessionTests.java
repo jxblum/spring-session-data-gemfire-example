@@ -13,7 +13,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.data.gemfire.client.ClientCacheFactoryBean;
 import org.springframework.data.gemfire.client.PoolFactoryBean;
@@ -22,7 +21,7 @@ import org.springframework.session.ExpiringSession;
 import org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import example.support.NumberUtils;
 
@@ -31,16 +30,19 @@ import example.support.NumberUtils;
  * backed by GemFire to manage HttpSessions.
  *
  * @author John Blum
+ * @see org.junit.Test
  * @see org.springframework.context.annotation.Bean
  * @see org.springframework.context.annotation.Configuration
  * @see org.springframework.session.ExpiringSession
  * @see org.springframework.session.SessionRepository
  * @see org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession
  * @see org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration
+ * @see org.springframework.test.context.ContextConfiguration
+ * @see org.springframework.test.context.junit4.SpringRunner
  * @since 1.0.0
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = SpringDataGemFireCacheClientSessionTests.GemFireCacheClientJavaConfiguration.class)
+@RunWith(SpringRunner.class)
+@ContextConfiguration
 @SuppressWarnings("unused")
 public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCacheClientSessionTests {
 
@@ -78,9 +80,8 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 		assertThat(actual).isNull();
 	}
 
-	@Configuration
 	@EnableGemFireHttpSession
-	public static class GemFireCacheClientJavaConfiguration {
+	static class TestConfiguration {
 
 		static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
 
@@ -120,9 +121,9 @@ public class SpringDataGemFireCacheClientSessionTests extends AbstractGemFireCac
 
 		@Bean
 		PoolFactoryBean gemfirePool(
-			@Value("${gemfire.client.server.host:localhost}") String host,
-		    @Value("${gemfire.client.server.port:40404") int port
-		) {
+				@Value("${gemfire.client.server.host:localhost}") String host,
+		    	@Value("${gemfire.client.server.port:40404}") int port ) {
+
 			PoolFactoryBean gemfirePool = new PoolFactoryBean();
 
 			gemfirePool.setKeepAlive(false);
