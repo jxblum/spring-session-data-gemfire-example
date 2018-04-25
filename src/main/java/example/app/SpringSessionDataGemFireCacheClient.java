@@ -8,18 +8,18 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
-import com.gemstone.gemfire.cache.GemFireCache;
-import com.gemstone.gemfire.cache.Region;
-import com.gemstone.gemfire.cache.RegionAttributes;
-import com.gemstone.gemfire.cache.client.ClientRegionShortcut;
-import com.gemstone.gemfire.cache.client.Pool;
-
+import org.apache.geode.cache.GemFireCache;
+import org.apache.geode.cache.Region;
+import org.apache.geode.cache.RegionAttributes;
+import org.apache.geode.cache.client.ClientRegionShortcut;
+import org.apache.geode.cache.client.Pool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.Profile;
@@ -30,7 +30,7 @@ import org.springframework.data.gemfire.client.PoolFactoryBean;
 import org.springframework.data.gemfire.config.annotation.ClientCacheApplication;
 import org.springframework.data.gemfire.config.xml.GemfireConstants;
 import org.springframework.data.gemfire.support.ConnectionEndpoint;
-import org.springframework.session.ExpiringSession;
+import org.springframework.session.Session;
 import org.springframework.session.data.gemfire.GemFireOperationsSessionRepository;
 import org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
@@ -45,47 +45,54 @@ import example.support.NumberUtils;
  */
 @SpringBootApplication
 @SuppressWarnings("unused")
-public class SpringSessionDataGemFireCacheClient implements CommandLineRunner {
+public class SpringSessionDataGemFireCacheClient {
 
 	public static void main(String[] args) {
-		SpringApplication springApplication = new SpringApplication(SpringSessionDataGemFireCacheClient.class);
-		springApplication.setWebEnvironment(false);
-		springApplication.run(args);
+
+		new SpringApplicationBuilder(SpringSessionDataGemFireCacheClient.class)
+			.web(WebApplicationType.NONE)
+			.build()
+			.run(args);
 	}
 
 	@Autowired
-	GemFireOperationsSessionRepository sessionRepository;
+	private GemFireOperationsSessionRepository sessionRepository;
 
-	@Resource(name = GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME)
-	Region<Object, ExpiringSession> sessions;
+	@Resource(name = GemFireHttpSessionConfiguration.DEFAULT_SESSION_REGION_NAME)
+	private Region<Object, Session> sessions;
 
-	ExpiringSession load(Object sessionId) {
-		return sessions.get(sessionId);
+	private Session load(Object sessionId) {
+		return this.sessions.get(sessionId);
 	}
 
-	ExpiringSession newSession() {
-		return sessionRepository.createSession();
+	private Session newSession() {
+		return this.sessionRepository.createSession();
 	}
 
-	ExpiringSession save(ExpiringSession session) {
-		sessionRepository.save(session);
+	private Session save(Session session) {
+		this.sessionRepository.save(session);
 		return session;
 	}
 
 	@PostConstruct
 	public void postInit() {
-		assertThat(sessionRepository).isNotNull();
-		assertThat(sessions).isNotNull();
+
+		assertThat(this.sessionRepository).isNotNull();
+		assertThat(this.sessions).isNotNull();
 	}
 
-	@Override
-	public void run(String... args) throws Exception {
-		ExpiringSession expected = save(newSession());
-		ExpiringSession actual = load(expected.getId());
+	@Bean
+	ApplicationRunner runner() {
 
-		assertThat(actual).isEqualTo(expected);
+		return args -> {
 
-		System.err.printf("Expected [%1$s];%nAnd was [%2$s]%n", expected, actual);
+			Session expected = save(newSession());
+			Session actual = load(expected.getId());
+
+			assertThat(actual).isEqualTo(expected);
+
+			System.err.printf("Expected [%1$s];%nAnd was [%2$s]%n", expected, actual);
+		};
 	}
 }
 
@@ -93,17 +100,16 @@ public class SpringSessionDataGemFireCacheClient implements CommandLineRunner {
 @EnableGemFireHttpSession
 @ImportResource("client-cache.xml")
 @SuppressWarnings("unused")
-class GemFireCacheClientXmlConfiguration {
-}
+class GemFireCacheClientXmlConfiguration { }
 
 @Profile("java")
 @EnableGemFireHttpSession
 @SuppressWarnings("unused")
 class GemFireCacheClientJavaConfiguration {
 
-	static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
+	private static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
 
-	static ConnectionEndpoint newConnectionEndpoint(String host, int port) {
+	private static ConnectionEndpoint newConnectionEndpoint(String host, int port) {
 		return new ConnectionEndpoint(host, port);
 	}
 
@@ -113,9 +119,12 @@ class GemFireCacheClientJavaConfiguration {
 	}
 
 	Properties gemfireProperties() {
+
 		Properties gemfireProperties = new Properties();
+
 		gemfireProperties.setProperty("name", applicationName());
 		gemfireProperties.setProperty("log-level", logLevel());
+
 		return gemfireProperties;
 	}
 
@@ -129,6 +138,7 @@ class GemFireCacheClientJavaConfiguration {
 
 	@Bean
 	ClientCacheFactoryBean gemfireCache() {
+
 		ClientCacheFactoryBean gemfireCache = new ClientCacheFactoryBean();
 
 		gemfireCache.setClose(true);
@@ -138,7 +148,8 @@ class GemFireCacheClientJavaConfiguration {
 	}
 
 	@Bean(name = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME)
-	PoolFactoryBean gemfirePool(@Value("${gemfire.client.server.host:localhost}") String host,
+	PoolFactoryBean gemfirePool(
+			@Value("${gemfire.client.server.host:localhost}") String host,
 			@Value("${gemfire.client.server.port:40404") int port) {
 
 		PoolFactoryBean gemfirePool = new PoolFactoryBean();
@@ -154,15 +165,15 @@ class GemFireCacheClientJavaConfiguration {
 		return gemfirePool;
 	}
 
-	@Bean(name = GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME)
+	@Bean(name = GemFireHttpSessionConfiguration.DEFAULT_SESSION_REGION_NAME)
 	@Profile("override-session-region")
-	ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion(GemFireCache gemfireCache,
+	ClientRegionFactoryBean<Object, Session> sessionRegion(GemFireCache gemfireCache,
 			@Qualifier("gemfirePool") Pool gemfirePool,
-			@Qualifier("sessionRegionAttributes") RegionAttributes<Object, ExpiringSession> sessionRegionAttributes) {
+			@Qualifier("sessionRegionAttributes") RegionAttributes<Object, Session> sessionRegionAttributes) {
 
 		System.err.printf("Overriding Spring Session Data GemFire's 'ClusteredSpringSessions' Region");
 
-		ClientRegionFactoryBean<Object, ExpiringSession> sessionRegion = new ClientRegionFactoryBean<>();
+		ClientRegionFactoryBean<Object, Session> sessionRegion = new ClientRegionFactoryBean<>();
 
 		sessionRegion.setAttributes(sessionRegionAttributes);
 		sessionRegion.setCache(gemfireCache);
@@ -178,5 +189,4 @@ class GemFireCacheClientJavaConfiguration {
 @EnableGemFireHttpSession(poolName = "DEFAULT")
 @ClientCacheApplication(subscriptionEnabled = true)
 @SuppressWarnings("unused")
-class GemFireCacheClientAnnotationConfiguration {
-}
+class GemFireCacheClientAnnotationConfiguration { }

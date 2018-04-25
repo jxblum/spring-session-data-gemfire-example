@@ -4,21 +4,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.annotation.Resource;
 
-import com.gemstone.gemfire.cache.Region;
-
+import org.apache.geode.cache.Region;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.data.gemfire.config.annotation.ClientCacheApplication;
-import org.springframework.session.ExpiringSession;
+import org.springframework.session.Session;
 import org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
- * The SpringSessionDataGemFireSessionIntegrationTests class...
+ * The {@link SpringSessionDataGemFireSessionIntegrationTests} class...
  *
  * @author John Blum
+ * @see example.AbstractGemFireCacheClientSessionTests
  * @since 1.0.0
  */
 @RunWith(SpringRunner.class)
@@ -26,17 +26,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class SpringSessionDataGemFireSessionIntegrationTests extends AbstractGemFireCacheClientSessionTests {
 
 	@SuppressWarnings("unused")
-	@Resource(name = GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME)
-	private Region<Object, ExpiringSession> sessions;
+	@Resource(name = GemFireHttpSessionConfiguration.DEFAULT_SESSION_REGION_NAME)
+	private Region<Object, Session> sessions;
 
 	@Override
-	protected Region<Object, ExpiringSession> getSessionRegion() {
-		return sessions;
+	protected Region<Object, Session> getSessionRegion() {
+		return this.sessions;
 	}
 
 	@Test
 	public void sessionCreationAndAccessIsSuccessful() {
-		ExpiringSession session = save(touch(newSession()));
+
+		Session session = save(touch(newSession()));
 
 		assertThat(session).isNotNull();
 		assertThat(session.isExpired()).isFalse();
@@ -46,7 +47,7 @@ public class SpringSessionDataGemFireSessionIntegrationTests extends AbstractGem
 
 		save(touch(session));
 
-		ExpiringSession loadedSession = load(session.getId());
+		Session loadedSession = load(session.getId());
 
 		assertThat(loadedSession).isNotNull();
 		assertThat(loadedSession.isExpired()).isFalse();
@@ -62,7 +63,7 @@ public class SpringSessionDataGemFireSessionIntegrationTests extends AbstractGem
 
 		save(touch(loadedSession));
 
-		ExpiringSession reloadedSession = load(loadedSession.getId());
+		Session reloadedSession = load(loadedSession.getId());
 
 		assertThat(reloadedSession).isNotNull();
 		assertThat(reloadedSession.isExpired()).isFalse();
@@ -76,6 +77,6 @@ public class SpringSessionDataGemFireSessionIntegrationTests extends AbstractGem
 	//@PeerCacheApplication
 	@ClientCacheApplication(subscriptionEnabled = true)
 	@EnableGemFireHttpSession(poolName = "DEFAULT")
-	static class TestConfiguration {
-	}
+	static class TestConfiguration { }
+
 }

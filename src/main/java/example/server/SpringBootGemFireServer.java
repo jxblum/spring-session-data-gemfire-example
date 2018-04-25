@@ -1,8 +1,11 @@
 package example.server;
 
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.data.gemfire.config.annotation.CacheServerApplication;
+import org.springframework.data.gemfire.config.annotation.EnableLocator;
+import org.springframework.data.gemfire.config.annotation.EnableManager;
 import org.springframework.session.data.gemfire.config.annotation.web.http.EnableGemFireHttpSession;
 
 /**
@@ -18,13 +21,17 @@ import org.springframework.session.data.gemfire.config.annotation.web.http.Enabl
  */
 @SpringBootApplication
 @CacheServerApplication(name = "SpringBootGemFireServer")
-@EnableGemFireHttpSession(maxInactiveIntervalInSeconds = 1)
+@EnableLocator
+@EnableManager(start = true)
+@EnableGemFireHttpSession(maxInactiveIntervalInSeconds = 30)
 @SuppressWarnings("unused")
 public class SpringBootGemFireServer {
 
 	public static void main(String[] args) {
-		SpringApplication springApplication = new SpringApplication(SpringBootGemFireServer.class);
-		springApplication.setWebEnvironment(false);
-		springApplication.run(args);
+
+		new SpringApplicationBuilder(SpringBootGemFireServer.class)
+			.web(WebApplicationType.NONE)
+			.build()
+			.run(args);
 	}
 }

@@ -25,14 +25,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @since 1.0.0
  */
 @SpringBootApplication
-@EnableGemFireHttpSession(poolName = "DEFAULT")
 @ClientCacheApplication(subscriptionEnabled = true)
+@EnableGemFireHttpSession(poolName = "DEFAULT")
 @Controller
 @SuppressWarnings("unused")
 public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 
-	static final String DEFAULT_GEMFIRE_LOG_LEVEL = "config";
-	static final String REQUEST_COUNT_SESSION_ATTRIBUTE_NAME = "requestCount";
+	private static final String DEFAULT_GEMFIRE_LOG_LEVEL = "config";
+	private static final String REQUEST_COUNT_SESSION_ATTRIBUTE_NAME = "requestCount";
 
 	public static void main(String[] args) {
 		SpringApplication.run(SpringBootWebApplicationWithSpringSessionDataGemFireEnabled.class, args);
@@ -62,6 +62,7 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 	}
 
 	private Map<String, String> attributes(HttpSession session) {
+
 		Map<String, String> attributes = new HashMap<>();
 
 		for (String attributeName : toIterable(session.getAttributeNames())) {
@@ -72,12 +73,16 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 	}
 
 	private <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
+
 		return () -> new Iterator<T>() {
-			@Override public boolean hasNext() {
+
+			@Override
+			public boolean hasNext() {
 				return enumeration.hasMoreElements();
 			}
 
-			@Override public T next() {
+			@Override
+			public T next() {
 				return enumeration.nextElement();
 			}
 		};
@@ -85,7 +90,9 @@ public class SpringBootWebApplicationWithSpringSessionDataGemFireEnabled {
 
 	@SuppressWarnings("all")
 	private HttpSession updateRequestCount(HttpSession session) {
+
 		synchronized (session) {
+
 			session.setAttribute(REQUEST_COUNT_SESSION_ATTRIBUTE_NAME,
 				nullSafeIncrement((Integer) session.getAttribute(REQUEST_COUNT_SESSION_ATTRIBUTE_NAME)));
 

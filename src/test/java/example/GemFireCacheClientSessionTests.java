@@ -4,16 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
-import com.gemstone.gemfire.cache.Region;
-import com.gemstone.gemfire.cache.client.ClientCache;
-import com.gemstone.gemfire.cache.client.ClientCacheFactory;
-import com.gemstone.gemfire.cache.client.ClientRegionFactory;
-import com.gemstone.gemfire.cache.client.ClientRegionShortcut;
-import com.gemstone.gemfire.cache.client.Pool;
-import com.gemstone.gemfire.cache.client.PoolFactory;
-import com.gemstone.gemfire.cache.client.PoolManager;
-import com.gemstone.gemfire.cache.server.CacheServer;
-
+import org.apache.geode.cache.Region;
+import org.apache.geode.cache.client.ClientCache;
+import org.apache.geode.cache.client.ClientCacheFactory;
+import org.apache.geode.cache.client.ClientRegionFactory;
+import org.apache.geode.cache.client.ClientRegionShortcut;
+import org.apache.geode.cache.client.Pool;
+import org.apache.geode.cache.client.PoolFactory;
+import org.apache.geode.cache.client.PoolManager;
+import org.apache.geode.cache.server.CacheServer;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,7 +20,7 @@ import org.junit.Test;
 import org.springframework.data.gemfire.GemfireOperations;
 import org.springframework.data.gemfire.GemfireTemplate;
 import org.springframework.data.gemfire.config.xml.GemfireConstants;
-import org.springframework.session.ExpiringSession;
+import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 import org.springframework.session.data.gemfire.GemFireOperationsSessionRepository;
 import org.springframework.session.data.gemfire.config.annotation.web.http.GemFireHttpSessionConfiguration;
@@ -33,56 +32,58 @@ import example.support.NumberUtils;
  * for managing HttpSessions.
  *
  * @author John Blum
- * @see com.gemstone.gemfire.cache.client.ClientCache
- * @see org.springframework.session.ExpiringSession
+ * @see org.apache.geode.cache.client.ClientCache
+ * @see org.springframework.session.Session
  * @see org.springframework.session.SessionRepository
  * @since 1.0.0
  */
 public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSessionTests {
 
-	protected static final int GEMFIRE_CACHE_SERVER_PORT = CacheServer.DEFAULT_PORT;
+	private static final int GEMFIRE_CACHE_SERVER_PORT = CacheServer.DEFAULT_PORT;
 
-	protected static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
-	protected static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
-	protected static final String GEMFIRE_POOL_NAME = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME;
-	protected static final String GEMFIRE_REGION_NAME =
-		GemFireHttpSessionConfiguration.DEFAULT_SPRING_SESSION_GEMFIRE_REGION_NAME;
+	private static final String DEFAULT_GEMFIRE_LOG_LEVEL = "error";
+	private static final String GEMFIRE_CACHE_SERVER_HOST = "localhost";
+	private static final String GEMFIRE_POOL_NAME = GemfireConstants.DEFAULT_GEMFIRE_POOL_NAME;
+	private static final String GEMFIRE_REGION_NAME = GemFireHttpSessionConfiguration.DEFAULT_SESSION_REGION_NAME;
 
 	private static ClientCache gemfireCache;
 
-	private static SessionRepository<ExpiringSession> sessionRepository;
+	private static SessionRepository<Session> sessionRepository;
 
 	@BeforeClass
-	public static void setupGemFireCacheClient() throws Exception {
+	public static void startGemFireCacheClient() throws Exception {
+
 		gemfireCache = gemfireCache(applicationName(), logLevel());
 
 		Pool gemfirePool = gemfirePool(GEMFIRE_POOL_NAME);
 
-		Region<Object, ExpiringSession> sessionRegion = sessionRegion(gemfireCache, gemfirePool, GEMFIRE_REGION_NAME);
+		Region<Object, Session> sessionRegion = sessionRegion(gemfireCache, gemfirePool, GEMFIRE_REGION_NAME);
 
 		sessionRepository = sessionRepository(gemfireOperations(sessionRegion));
 	}
 
 	@AfterClass
-	public static void shutdownGemFireCacheClient() {
+	public static void stopGemFireCacheClient() {
+
 		if (gemfireCache != null) {
 			gemfireCache.close();
 		}
 	}
 
-	static String applicationName() {
+	private static String applicationName() {
 		return GemFireCacheClientSessionTests.class.getSimpleName();
 	}
 
-	static String logLevel() {
+	private static String logLevel() {
 		return System.getProperty("gemfire.log.level", DEFAULT_GEMFIRE_LOG_LEVEL);
 	}
 
-	static ClientCache gemfireCache(String name, String logLevel) {
+	private static ClientCache gemfireCache(String name, String logLevel) {
 		return new ClientCacheFactory().set("name", name).set("log-level", logLevel).create();
 	}
 
-	static Pool gemfirePool(String poolName) {
+	private static Pool gemfirePool(String poolName) {
+
 		PoolFactory poolFactory = PoolManager.createFactory();
 
 		poolFactory.setPingInterval(TimeUnit.SECONDS.toMillis(5));
@@ -95,35 +96,39 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 		return poolFactory.create(poolName);
 	}
 
-	static Region<Object, ExpiringSession> sessionRegion(ClientCache gemfireCache, Pool gemfirePool, String name) {
-		ClientRegionFactory<Object, ExpiringSession> regionFactory = gemfireCache.createClientRegionFactory(
-			ClientRegionShortcut.PROXY);
+	private static Region<Object, Session> sessionRegion(ClientCache gemfireCache, Pool gemfirePool, String name) {
+
+		ClientRegionFactory<Object, Session> regionFactory =
+			gemfireCache.createClientRegionFactory(ClientRegionShortcut.PROXY);
 
 		regionFactory.setKeyConstraint(Object.class);
 		regionFactory.setPoolName(gemfirePool.getName());
-		regionFactory.setValueConstraint(ExpiringSession.class);
+		regionFactory.setValueConstraint(Session.class);
 
 		return regionFactory.create(name);
 	}
 
-	static GemfireOperations gemfireOperations(Region<Object, ExpiringSession> sessionRegion) {
+	private static GemfireOperations gemfireOperations(Region<Object, Session> sessionRegion) {
 		return new GemfireTemplate(sessionRegion);
 	}
 
-	static SessionRepository<ExpiringSession> sessionRepository(GemfireOperations gemfireOperations) throws Exception {
+	private static SessionRepository<Session> sessionRepository(GemfireOperations gemfireOperations) throws Exception {
+
 		GemFireOperationsSessionRepository sessionRepository =
 			new GemFireOperationsSessionRepository(gemfireOperations);
+
 		sessionRepository.afterPropertiesSet();
+
 		return sessionRepository;
 	}
 
 	@Override
-	protected Region<Object, ExpiringSession> getSessionRegion() {
+	protected Region<Object, Session> getSessionRegion() {
 		return gemfireCache.getRegion(GEMFIRE_REGION_NAME);
 	}
 
 	@Override
-	protected SessionRepository<ExpiringSession> getSessionRepository() {
+	protected SessionRepository<Session> getSessionRepository() {
 		assertThat(sessionRepository).isNotNull();
 		return sessionRepository;
 	}
@@ -136,12 +141,13 @@ public class GemFireCacheClientSessionTests extends AbstractGemFireCacheClientSe
 
 	@Test
 	public void sessionCreationAccessAndExpirationIsSuccessful() {
-		ExpiringSession expected = save(touch(newSession()));
+
+		Session expected = save(touch(newSession()));
 
 		assertThat(expected).isNotNull();
 		assertThat(expected.isExpired()).isFalse();
 
-		ExpiringSession actual = loadFromRegion(expected.getId());
+		Session actual = loadFromRegion(expected.getId());
 
 		assertThat(actual).isNotNull();
 		assertThat(actual.isExpired()).isFalse();

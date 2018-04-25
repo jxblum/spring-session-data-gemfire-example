@@ -2,62 +2,64 @@ package example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
-import com.gemstone.gemfire.cache.Region;
-
+import org.apache.geode.cache.Region;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.session.ExpiringSession;
+import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
 
 /**
- * The AbstractGemFireCacheClientSessionTests class is an abstract base class encapsulating core functionality
+ * The {@link AbstractGemFireCacheClientSessionTests} class is an abstract base class encapsulating core functionality
  * for writing integration tests using GemFire as the HttpSession implementation provider for Spring Session.
  *
  * @author John Blum
- * @see org.springframework.session.ExpiringSession
+ * @see org.apache.geode.cache.Region
+ * @see org.springframework.session.Session
  * @see org.springframework.session.SessionRepository
- * @see com.gemstone.gemfire.cache.Region
  * @since 1.0.0
  */
+@SuppressWarnings("all")
 public abstract class AbstractGemFireCacheClientSessionTests {
 
 	private final Object LOCK = new Object();
 
 	@Autowired
-	private SessionRepository<ExpiringSession> sessionRepository;
+	private SessionRepository<Session> sessionRepository;
 
-	protected abstract Region<Object, ExpiringSession> getSessionRegion();
+	protected abstract Region<Object, Session> getSessionRegion();
 
-	protected SessionRepository<ExpiringSession> getSessionRepository() {
+	protected SessionRepository<Session> getSessionRepository() {
 		assertThat(sessionRepository).isNotNull();
 		return sessionRepository;
 	}
 
-	protected ExpiringSession load(Object sessionId) {
-		return getSessionRepository().getSession(sessionId.toString());
+	protected Session load(Object sessionId) {
+		return getSessionRepository().findById(sessionId.toString());
 	}
 
-	protected ExpiringSession loadFromRegion(Object sessionId) {
+	protected Session loadFromRegion(Object sessionId) {
 		return getSessionRegion().get(sessionId);
 	}
 
-	protected ExpiringSession newSession() {
+	protected Session newSession() {
 		return getSessionRepository().createSession();
 	}
 
-	protected ExpiringSession save(ExpiringSession session) {
+	protected Session save(Session session) {
 		getSessionRepository().save(session);
 		return session;
 	}
 
-	protected ExpiringSession touch(ExpiringSession session) {
-		session.setLastAccessedTime(System.currentTimeMillis());
+	protected Session touch(Session session) {
+		session.setLastAccessedTime(Instant.now());
 		return session;
 	}
 
 	protected void waitOnConditionForDuration(Condition condition, long duration) {
-		final long timeout = (System.currentTimeMillis() + duration);
+
+		final long timeout = System.currentTimeMillis() + duration;
 
 		boolean interrupted = false;
 
